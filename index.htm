@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الطلاب - تسجيل الدخول</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100%;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.5s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+        
+        .modern-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #d1d5db;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        
+        .student-card {
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-color: #d1d5db;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .view-toggle {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border: 3px solid #475569;
+            transition: all 0.3s ease;
+            color: #f1f5f9;
+            font-weight: 900;
+            font-size: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 0.5px;
+        }
+        
+        .view-toggle:hover {
+            background: linear-gradient(135deg, #334155, #475569);
+            border-color: #64748b;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .view-toggle.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-color: #2563eb;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+            transform: translateY(-3px);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stats-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .modern-input {
+            background: white;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .modern-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .icon-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .cloud-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .cloud-connected {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+        }
+
+        .cloud-disconnected {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+        }
+
+        .cloud-syncing {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.39);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Cloud Status Indicator -->
+    <div id="cloud-status" class="cloud-status cloud-disconnected">
+        <span id="cloud-status-text">🔴 غير متصل</span>
+    </div>
+
+    <!-- Registration Page -->
+    <div id="registration-page" class="hidden min-h-screen flex items-center justify-center gradient-bg">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="mx-auto w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">إنشاء حساب جديد</h1>
+                <p class="text-gray-600">تسجيل مدرس جديد في النظام السحابي</p>
+                <div class="mt-2 text-sm text-blue-600 font-medium">☁️ البيانات محفوظة في الكلاود</div>
+            </div>
+            
+            <form onsubmit="handleRegistration(event)" class="space-y-6">
+                <div>
+                    <label for="reg-teacher-name" class="block text-sm font-medium text-gray-700 mb-2">اسم المدرس</label>
+                    <input type="text" id="reg-teacher-name" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="أدخل اسمك الكامل">
+                </div>
+                
+                <div>
+                    <label for="reg-username" class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                    <input type="text" id="reg-username" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="أدخل اسم المستخدم">
+                </div>
+                
+                <div>
+                    <label for="reg-password" class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                    <input type="password" id="reg-password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="أدخل كلمة المرور">
+                </div>
+                
+                <div>
+                    <label for="reg-subject" class="block text-sm font-medium text-gray-700 mb-2">المادة التي تدرسها</label>
+                    <select id="reg-subject" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        <option value="">اختر المادة</option>
+                        <option value="الرياضيات">الرياضيات</option>
+                        <option value="الفيزياء">الفيزياء</option>
+                        <option value="الكيمياء">الكيمياء</option>
+                        <option value="الأحياء">الأحياء</option>
+                        <option value="اللغة العربية">اللغة العربية</option>
+                        <option value="اللغة الإنجليزية">اللغة الإنجليزية</option>
+                        <option value="اللغة الفرنسية">اللغة الفرنسية</option>
+                        <option value="اللغة الألمانية">اللغة الألمانية</option>
+                        <option value="التاريخ">التاريخ</option>
+                        <option value="الجغرافيا">الجغرافيا</option>
+                        <option value="الفلسفة والمنطق">الفلسفة والمنطق</option>
+                        <option value="علم النفس والاجتماع">علم النفس والاجتماع</option>
+                        <option value="الاقتصاد والإحصاء">الاقتصاد والإحصاء</option>
+                        <option value="الجيولوجيا وعلوم البيئة">الجيولوجيا وعلوم البيئة</option>
+                        <option value="التربية الدينية الإسلامية">التربية الدينية الإسلامية</option>
+                        <option value="التربية الدينية المسيحية">التربية الدينية المسيحية</option>
+                        <option value="التربية الوطنية">التربية الوطنية</option>
+                        <option value="الحاسب الآلي">الحاسب الآلي</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="reg-submit-btn" class="w-full btn-primary text-white py-3 px-6 rounded-lg font-medium">
+                    <span id="reg-btn-text">إنشاء الحساب</span>
+                    <div id="reg-loading" class="loading-spinner hidden ml-2"></div>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <button onclick="showLoginPage()" class="text-blue-600 hover:text-blue-800 text-sm">
+                    لديك حساب بالفعل؟ تسجيل الدخول
+                </button>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                <p class="text-sm text-gray-500">
+                    Developed by <span class="font-semibold text-blue-600">Mr. Mohamed El-Gazzar</span>
+                </p>
+                <p class="text-xs text-green-600 mt-1">☁️ نسخة محسنة مع التخزين السحابي</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center gradient-bg">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="mx-auto w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">نظام إدارة الطلاب</h1>
+                <p class="text-gray-600">تسجيل الدخول للمدرسين</p>
+                <div class="mt-2 text-sm text-blue-600 font-medium">☁️ متاح من أي جهاز في العالم</div>
+            </div>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                    <input type="text" id="username" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="أدخل اسم المستخدم">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                    <input type="password" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           placeholder="أدخل كلمة المرور">
+                </div>
+                
+                <button type="submit" id="login-submit-btn" class="w-full btn-primary text-white py-3 px-6 rounded-lg font-medium">
+                    <span id="login-btn-text">تسجيل الدخول</span>
+                    <div id="login-loading" class="loading-spinner hidden ml-2"></div>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <button onclick="showRegistrationPage()" class="text-blue-600 hover:text-blue-800 text-sm">
+                    ليس لديك حساب؟ إنشاء حساب جديد
+                </button>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                <p class="text-sm text-gray-500">
+                    Developed by <span class="font-semibold text-blue-600">Mr. Mohamed El-Gazzar</span>
+                </p>
+                <p class="text-xs text-green-600 mt-1">☁️ نسخة محسنة مع التخزين السحابي</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Selection Page -->
+    <div id="dashboard-selection" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold">نظام إدارة الطلاب</h1>
+                        <p class="text-blue-100 mt-1" id="welcome-message">مرحباً</p>
+                        <div class="text-sm text-blue-200 mt-1">☁️ متزامن مع الكلاود</div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="syncData()" id="sync-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2">
+                            <span id="sync-text">🔄 مزامنة</span>
+                        </button>
+                        <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2">
+                            <span>تسجيل الخروج</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">اختر نظام الإدارة</h2>
+                <p class="text-gray-600">يمكنك إدارة طلاب المجموعات والطلاب البرايفت بشكل منفصل</p>
+                <div class="mt-2 text-sm text-green-600 font-medium">✅ جميع البيانات محفوظة في الكلاود ومتاحة من أي جهاز</div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Groups System Card -->
+                <div onclick="openGroupsSystem()" class="card-hover rounded-2xl p-8 cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all duration-300">
+                    <div class="text-center">
+                        <div class="mx-auto w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">نظام المجموعات</h3>
+                        <p class="text-gray-600 mb-6">إدارة طلاب المجموعات والحصص الجماعية</p>
+
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all">
+                            دخول النظام
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Private System Card -->
+                <div onclick="openPrivateSystem()" class="card-hover rounded-2xl p-8 cursor-pointer border-2 border-transparent hover:border-green-500 transition-all duration-300">
+                    <div class="text-center">
+                        <div class="mx-auto w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">نظام البرايفت</h3>
+                        <p class="text-gray-600 mb-6">إدارة الطلاب البرايفت والحصص الفردية</p>
+
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all">
+                            دخول النظام
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Features Card -->
+                <div onclick="showMainAdvancedFeatures()" class="card-hover rounded-2xl p-8 cursor-pointer border-2 border-transparent hover:border-purple-500 transition-all duration-300">
+                    <div class="text-center">
+                        <div class="mx-auto w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">الميزات المتقدمة</h3>
+                        <p class="text-gray-600 mb-6">أدوات إضافية وتقارير شاملة</p>
+
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all">
+                            استكشاف الميزات
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Firebase Configuration - إعدادات حقيقية
+        const firebaseConfig = {
+            apiKey: "AIzaSyDoW0ITmblEDaiVdVdG8zL_qcV09ShWCY0",
+            authDomain: "elgazzar-7927c.firebaseapp.com",
+            projectId: "elgazzar-7927c",
+            storageBucket: "elgazzar-7927c.firebasestorage.app",
+            messagingSenderId: "591660798321",
+            appId: "1:591660798321:web:ea4ee5edc376e9caa1a6d0",
+            measurementId: "G-Z963JT3ZKP"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        let isCloudConnected = false;
+
+        // Initialize Firebase with fallback
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                // Test connection
+                testCloudConnection();
+            } catch (error) {
+                console.log('Firebase initialization failed, using local storage fallback');
+                updateCloudStatus('disconnected', 'Firebase غير متاح - وضع محلي');
+                isCloudConnected = false;
+            }
+        }
+
+        // Test cloud connection
+        async function testCloudConnection() {
+            try {
+                // Try to read from Firestore
+                await db.collection('test').limit(1).get();
+                updateCloudStatus('connected', '🟢 متصل بالكلاود');
+                isCloudConnected = true;
+                showSuccess('تم الاتصال بالكلاود بنجاح! ☁️');
+            } catch (error) {
+                updateCloudStatus('disconnected', '🔴 غير متصل - وضع محلي');
+                isCloudConnected = false;
+                showWarning('لا يمكن الاتصال بالكلاود، سيتم استخدام التخزين المحلي');
+            }
+        }
+
+        // Update cloud status indicator
+        function updateCloudStatus(status, text) {
+            const statusElement = document.getElementById('cloud-status');
+            const statusText = document.getElementById('cloud-status-text');
+            
+            statusElement.className = `cloud-status cloud-${status}`;
+            statusText.textContent = text;
+        }
+
+        // Global variables
+        let currentUser = null;
+        let groupStudents = [];
+        let privateStudents = [];
+        let filteredGroupStudents = [];
+        let filteredPrivateStudents = [];
+        let editingIndex = -1;
+        let currentSystem = '';
+        let currentView = { group: 'table', private: 'table' };
+        let allUsers = {}; // Store all registered users
+
+        // Initialize the application
+        function initializeApp() {
+            // Initialize Firebase
+            initializeFirebase();
+            
+            // Load all users from localStorage (fallback)
+            loadAllUsers();
+            
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                loadUserData(currentUser.username);
+                showDashboardSelection();
+            } else {
+                // Always show login page first
+                showLoginPage();
+            }
+        }
+
+        // Cloud Storage Functions
+        async function saveToCloud(username, data) {
+            if (!isCloudConnected || !db) {
+                return false;
+            }
+            
+            try {
+                updateCloudStatus('syncing', '🟡 جاري المزامنة...');
+                
+                await db.collection('users').doc(username).set({
+                    ...data,
+                    lastUpdate: firebase.firestore.FieldValue.serverTimestamp(),
+                    syncedAt: new Date().toISOString()
+                });
+                
+                updateCloudStatus('connected', '🟢 متصل بالكلاود');
+                return true;
+            } catch (error) {
+                console.error('Cloud save failed:', error);
+                updateCloudStatus('disconnected', '🔴 خطأ في المزامنة');
+                return false;
+            }
+        }
+
+        async function loadFromCloud(username) {
+            if (!isCloudConnected || !db) {
+                return null;
+            }
+            
+            try {
+                updateCloudStatus('syncing', '🟡 جاري التحميل...');
+                
+                const doc = await db.collection('users').doc(username).get();
+                
+                if (doc.exists) {
+                    updateCloudStatus('connected', '🟢 متصل بالكلاود');
+                    return doc.data();
+                } else {
+                    updateCloudStatus('connected', '🟢 متصل بالكلاود');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Cloud load failed:', error);
+                updateCloudStatus('disconnected', '🔴 خطأ في التحميل');
+                return null;
+            }
+        }
+
+        // Enhanced sync function
+        async function syncData() {
+            if (!currentUser) {
+                showError('يجب تسجيل الدخول أولاً');
+                return;
+            }
+            
+            const syncBtn = document.getElementById('sync-btn');
+            const syncText = document.getElementById('sync-text');
+            
+            if (syncBtn) {
+                syncBtn.disabled = true;
+                syncText.innerHTML = '<div class="loading-spinner"></div> جاري المزامنة...';
+            }
+            
+            try {
+                // Try to save current data to cloud
+                const userData = {
+                    teacherName: currentUser.teacherName,
+                    username: currentUser.username,
+                    subject: currentUser.subject,
+                    groupStudents: groupStudents,
+                    privateStudents: privateStudents,
+                    registrationDate: currentUser.registrationDate || new Date().toISOString()
+                };
+                
+                const cloudSaved = await saveToCloud(currentUser.username, userData);
+                
+                if (cloudSaved) {
+                    // Also try to load any newer data from cloud
+                    const cloudData = await loadFromCloud(currentUser.username);
+                    
+                    if (cloudData && cloudData.lastUpdate) {
+                        // Check if cloud data is newer
+                        const localUpdate = localStorage.getItem(`lastUpdate_${currentUser.username}`);
+                        const cloudUpdate = cloudData.lastUpdate.toDate ? cloudData.lastUpdate.toDate().toISOString() : cloudData.syncedAt;
+                        
+                        if (!localUpdate || new Date(cloudUpdate) > new Date(localUpdate)) {
+                            // Cloud data is newer, update local data
+                            if (cloudData.groupStudents) groupStudents = cloudData.groupStudents;
+                            if (cloudData.privateStudents) privateStudents = cloudData.privateStudents;
+                            
+                            // Update filtered arrays
+                            filteredGroupStudents = [...groupStudents];
+                            filteredPrivateStudents = [...privateStudents];
+                            
+                            // Save to local storage
+                            saveUserData(currentUser.username);
+                            
+                            // Refresh display if we're in a system
+                            if (currentSystem) {
+                                updateStats(currentSystem);
+                                displayStudents(currentSystem);
+                            }
+                            
+                            showSuccess('تم تحديث البيانات من الكلاود! 📥');
+                        } else {
+                            showSuccess('تم رفع البيانات للكلاود بنجاح! 📤');
+                        }
+                    } else {
+                        showSuccess('تم رفع البيانات للكلاود بنجاح! 📤');
+                    }
+                } else {
+                    // Fallback to local storage
+                    saveUserData(currentUser.username);
+                    showWarning('تم الحفظ محلياً - الكلاود غير متاح حالياً');
+                }
+            } catch (error) {
+                console.error('Sync failed:', error);
+                showError('فشل في المزامنة - تم الحفظ محلياً');
+                saveUserData(currentUser.username);
+            } finally {
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncText.textContent = '🔄 مزامنة';
+                }
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification fade-in bg-white border-r-4 ${
+                type === 'success' ? 'border-green-500' : 
+                type === 'error' ? 'border-red-500' : 
+                type === 'warning' ? 'border-yellow-500' : 'border-blue-500'
+            } p-4 rounded-lg shadow-lg`;
+            
+            const icon = type === 'success' ? '✅' : 
+                        type === 'error' ? '❌' : 
+                        type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-2xl ml-3">${icon}</span>
+                    <div>
+                        <p class="font-medium text-gray-800">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="mr-auto text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Convenience functions for notifications
+        function showSuccess(message) { showNotification(message, 'success'); }
+        function showError(message) { showNotification(message, 'error'); }
+        function showWarning(message) { showNotification(message, 'warning'); }
+        function showInfo(message) { showNotification(message, 'info'); }
+
+        // Show registration page
+        function showRegistrationPage() {
+            document.getElementById('registration-page').classList.remove('hidden');
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('dashboard-selection').classList.add('hidden');
+        }
+
+        // Show login page
+        function showLoginPage() {
+            document.getElementById('registration-page').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('dashboard-selection').classList.add('hidden');
+        }
+
+        // Show dashboard selection
+        function showDashboardSelection() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('dashboard-selection').classList.remove('hidden');
+            
+            if (currentUser) {
+                document.getElementById('welcome-message').textContent = 
+                    `مرحباً مستر ${currentUser.teacherName} - مدرس ${currentUser.subject}`;
+            }
+        }
+
+        // Enhanced registration with cloud support
+        async function handleRegistration(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('reg-submit-btn');
+            const btnText = document.getElementById('reg-btn-text');
+            const loading = document.getElementById('reg-loading');
+            
+            submitBtn.disabled = true;
+            btnText.textContent = 'جاري الإنشاء...';
+            loading.classList.remove('hidden');
+            
+            const teacherName = document.getElementById('reg-teacher-name').value.trim();
+            const username = document.getElementById('reg-username').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+            const subject = document.getElementById('reg-subject').value;
+            
+            try {
+                // Create new user
+                const userData = {
+                    teacherName,
+                    username,
+                    password,
+                    subject,
+                    registrationDate: new Date().toISOString(),
+                    groupStudents: [],
+                    privateStudents: []
+                };
+                
+                // Save to cloud first
+                const cloudSaved = await saveToCloud(username, userData);
+                
+                // Save to local storage as backup
+                loadAllUsers();
+                allUsers[username] = userData;
+                allUsers[username].lastUpdate = new Date().toISOString();
+                localStorage.setItem('allUsers', JSON.stringify(allUsers));
+                
+                if (cloudSaved) {
+                    showSuccess('تم إنشاء الحساب بنجاح في الكلاود! ☁️ يمكنك الآن تسجيل الدخول من أي جهاز.');
+                } else {
+                    showSuccess('تم إنشاء الحساب بنجاح محلياً! يمكنك الآن تسجيل الدخول.');
+                }
+                
+                // Clear form
+                document.getElementById('reg-teacher-name').value = '';
+                document.getElementById('reg-username').value = '';
+                document.getElementById('reg-password').value = '';
+                document.getElementById('reg-subject').value = '';
+                
+                showLoginPage();
+                
+            } catch (error) {
+                console.error('Registration failed:', error);
+                showError('حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى.');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'إنشاء الحساب';
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Enhanced login with cloud support
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('login-submit-btn');
+            const btnText = document.getElementById('login-btn-text');
+            const loading = document.getElementById('login-loading');
+            
+            submitBtn.disabled = true;
+            btnText.textContent = 'جاري تسجيل الدخول...';
+            loading.classList.remove('hidden');
+            
+            const username = document.getElementById('username').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            
+            try {
+                let userData = null;
+                
+                // Try to load from cloud first
+                const cloudData = await loadFromCloud(username);
+                if (cloudData && cloudData.password === password) {
+                    userData = cloudData;
+                    showInfo('تم تسجيل الدخول من الكلاود ☁️');
+                } else {
+                    // Fallback to local storage
+                    loadAllUsers();
+                    if (allUsers[username] && allUsers[username].password === password) {
+                        userData = allUsers[username];
+                        showInfo('تم تسجيل الدخول محلياً 💾');
+                    }
+                }
+                
+                if (!userData) {
+                    showError('اسم المستخدم أو كلمة المرور غير صحيحة');
+                    return;
+                }
+                
+                currentUser = {
+                    teacherName: userData.teacherName,
+                    username: userData.username,
+                    subject: userData.subject,
+                    registrationDate: userData.registrationDate,
+                    loginTime: new Date().toISOString()
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Load user-specific data
+                await loadUserData(username);
+                
+                showDashboardSelection();
+                showSuccess(`مرحباً ${userData.teacherName}! تم تسجيل الدخول بنجاح 🎉`);
+                
+                // Clear form
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                
+            } catch (error) {
+                console.error('Login failed:', error);
+                showError('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'تسجيل الدخول';
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Load all users from localStorage (fallback)
+        function loadAllUsers() {
+            const savedUsers = localStorage.getItem('allUsers');
+            if (savedUsers) {
+                allUsers = JSON.parse(savedUsers);
+            }
+        }
+
+        // Enhanced load user data with cloud support
+        async function loadUserData(username) {
+            try {
+                // Try to load from cloud first
+                const cloudData = await loadFromCloud(username);
+                
+                if (cloudData) {
+                    groupStudents = cloudData.groupStudents || [];
+                    privateStudents = cloudData.privateStudents || [];
+                    filteredGroupStudents = [...groupStudents];
+                    filteredPrivateStudents = [...privateStudents];
+                    
+                    // Update local storage as backup
+                    if (!allUsers[username]) {
+                        allUsers[username] = {};
+                    }
+                    allUsers[username].groupStudents = groupStudents;
+                    allUsers[username].privateStudents = privateStudents;
+                    allUsers[username].lastUpdate = new Date().toISOString();
+                    localStorage.setItem('allUsers', JSON.stringify(allUsers));
+                    
+                    showInfo('تم تحميل البيانات من الكلاود ☁️');
+                    return;
+                }
+            } catch (error) {
+                console.log('Cloud load failed, using local storage');
+            }
+            
+            // Fallback to local storage
+            if (allUsers[username]) {
+                groupStudents = allUsers[username].groupStudents || [];
+                privateStudents = allUsers[username].privateStudents || [];
+                filteredGroupStudents = [...groupStudents];
+                filteredPrivateStudents = [...privateStudents];
+            } else {
+                groupStudents = [];
+                privateStudents = [];
+                filteredGroupStudents = [];
+                filteredPrivateStudents = [];
+            }
+        }
+
+        // Enhanced logout with cloud sync
+        async function logout() {
+            // Save current user data before logout
+            if (currentUser) {
+                await saveUserData(currentUser.username);
+                showInfo('تم حفظ البيانات قبل تسجيل الخروج');
+            }
+            
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            
+            // Clear current data
+            groupStudents = [];
+            privateStudents = [];
+            filteredGroupStudents = [];
+            filteredPrivateStudents = [];
+            
+            showLoginPage();
+            showInfo('تم تسجيل الخروج بنجاح');
+        }
+
+        // Enhanced save user data with cloud support
+        async function saveUserData(username) {
+            if (!allUsers[username]) {
+                allUsers[username] = {};
+            }
+            
+            // Update local storage
+            allUsers[username].groupStudents = groupStudents;
+            allUsers[username].privateStudents = privateStudents;
+            allUsers[username].lastUpdate = new Date().toISOString();
+            localStorage.setItem('allUsers', JSON.stringify(allUsers));
+            localStorage.setItem(`lastUpdate_${username}`, allUsers[username].lastUpdate);
+            
+            // Try to save to cloud
+            if (currentUser) {
+                const userData = {
+                    teacherName: currentUser.teacherName,
+                    username: currentUser.username,
+                    subject: currentUser.subject,
+                    groupStudents: groupStudents,
+                    privateStudents: privateStudents,
+                    registrationDate: currentUser.registrationDate || new Date().toISOString()
+                };
+                
+                await saveToCloud(username, userData);
+            }
+        }
+
+        // Initialize the application when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'994d30b5a1f17940',t:'MTc2MTUxNTY0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
